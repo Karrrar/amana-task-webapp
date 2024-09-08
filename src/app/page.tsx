@@ -1,147 +1,109 @@
-"use client";
-import React, { useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+'use client'
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-const APILink = "https://jsonplaceholder.typicode.com/posts";
+const APILink = "https://localhost:7269/Task";
 
-const Home: React.FC = () => {
-  const [formData, setFormData] = useState({
-    task: "",
-    description: "",
-    priority: "Medium",
-    dueDate: "",
-    status: "Not Started",
-  });
+enum Priority {
+  High = 0,
+  Medium = 1,
+  Low = 2,
+}
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+type Task = {
+  title: string;
+  description: string;
+  priority: number;
+  dueDate: string;
+  status: string;
+}
+
+
+
+const TaskPage = () => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(APILink);
+        if (!response.ok) {
+          throw new Error('Failed to fetch tasks');
+        }
+        const data = await response.json();
+        setTasks(data);
+        setLoading(false);
+      } catch (err: any) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  const redirectToAddPage = () => {
+    router.push("/add")
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const response = await fetch(APILink, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Success:", data);
-      } else {
-        console.error("Error: Network response was not ok.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
+  const getPriorityLabel = (priority: Priority) => {
+    switch (priority) {
+      case Priority.High:
+        return 'High';
+      case Priority.Medium:
+        return 'Medium';
+      case Priority.Low:
+        return 'Low';
+      default:
+        return 'Unknown';
     }
   };
 
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return <p>Error: {error}</p>;
+  }
+
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 ">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-8 rounded shadow-md max-w-md w-full"
-      >
-        <h2 className="text-2xl font-bold mb-6 text-center text-black">
-          Task Form
-        </h2>
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-4">Task List</h1>
 
-        <div className="mb-4">
-          <label htmlFor="task" className="block text-gray-700">
-            Task
-          </label>
-          <input
-            type="text"
-            id="task"
-            name="task"
-            value={formData.task}
-            onChange={handleChange}
-            className="w-full p-2 mt-2 border text-black border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-            required
-          />
-        </div>
+      <div className="grid grid-cols-5 gap-4 bg-gray-200 font-semibold p-2">
+        <div>Title</div>
+        <div>Description</div>
+        <div>Priority</div>
+        <div>Due Date</div>
+        <div>Status</div>
+      </div>
 
-        <div className="mb-4">
-          <label htmlFor="description" className="block text-gray-700">
-            Description
-          </label>
-          <input
-            type="text"
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full p-2 mt-2 border border-gray-300 text-black rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="priority" className="block text-gray-700">
-            Priority
-          </label>
-          <select
-            id="priority"
-            name="priority"
-            value={formData.priority}
-            onChange={handleChange}
-            className="w-full p-2 mt-2 border text-black border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="0">High</option>
-            <option value="1">Medium</option>
-            <option value="2">Low</option>
-          </select>
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="dueDate" className="block text-gray-700">
-            Due Date
-          </label>
-          <input
-            type="date"
-            id="dueDate"
-            name="dueDate"
-            value={formData.dueDate}
-            onChange={handleChange}
-            className="w-full p-2 mt-2 border text-black border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="status" className="block text-gray-700">
-            Status
-          </label>
-          <select
-            id="status"
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="w-full p-2 mt-2 border text-black border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="Not Started">Not Started</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-          </select>
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition duration-300"
+      {tasks.map((task, index) => (
+        <div
+          key={index}
+          className="grid grid-cols-5 gap-4 p-2 border-b border-gray-200 hover:bg-gray-100"
         >
-          Submit
-        </button>
-      </form>
+          <div>{task.title}</div>
+          <div>{task.description}</div>
+          <div>{getPriorityLabel(task.priority)}</div>
+          <div>{task.dueDate}</div>
+          <div>{task.status}</div>
+        </div>
+      ))}
+
+      <button
+        onClick={redirectToAddPage}
+        className="mt-4 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+      >
+        Add New Task
+      </button>
     </div>
   );
 };
 
-export default Home;
+export default TaskPage;
