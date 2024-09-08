@@ -95,9 +95,9 @@ const Home: React.FC = () => {
             onChange={handleChange}
             className="w-full p-2 mt-2 border text-black border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
+            <option value="0">High</option>
+            <option value="1">Medium</option>
+            <option value="2">Low</option>
           </select>
         </div>
 
